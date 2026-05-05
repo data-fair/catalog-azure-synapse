@@ -11,14 +11,29 @@ import type { AzureSynapseCapabilities } from './capabilities.ts'
  * @param context   The context containing catalog configuration and secrets fields
  */
 export default async ({ catalogConfig, secrets }: PrepareContext<AzureSynapseConfig, AzureSynapseCapabilities>) => {
-  if (catalogConfig.accessKeys.secretAccessKey === '') {
-    delete secrets.secretAccessKey
-  } else if (catalogConfig.accessKeys.secretAccessKey && catalogConfig.accessKeys.secretAccessKey !== '***************') {
-    secrets.secretAccessKey = catalogConfig.accessKeys.secretAccessKey
-    catalogConfig.accessKeys.secretAccessKey = '***************'
+  switch (catalogConfig.connectionMethod.key) {
+    case 'clientSecret':
+      delete secrets.accountKey
+      if (catalogConfig.connectionMethod.clientSecret === '') {
+        delete secrets.clientSecret
+      } else if (catalogConfig.connectionMethod.clientSecret && catalogConfig.connectionMethod.clientSecret !== '***************') {
+        secrets.clientSecret = catalogConfig.connectionMethod.clientSecret
+        catalogConfig.connectionMethod.clientSecret = '***************'
+      }
+      break
+    case 'storageSharedKey':
+      delete secrets.clientSecret
+      if (catalogConfig.connectionMethod.accountKey === '') {
+        delete secrets.accountKey
+      } else if (catalogConfig.connectionMethod.accountKey && catalogConfig.connectionMethod.accountKey !== '***************') {
+        secrets.accountKey = catalogConfig.connectionMethod.accountKey
+        catalogConfig.connectionMethod.accountKey = '***************'
+      }
+      break
+    default: break
   }
 
-  // try the S3 connection
+  // try the Azure Synapse connection
   try {
     // We use a minimal command to test if everything is correct
     /**

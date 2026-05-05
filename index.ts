@@ -23,8 +23,8 @@ const plugin: CatalogPlugin<AzureSynapseConfig, AzureSynapseCapabilities> = {
   },
 
   metadata: {
-    title: 'Catalog S3',
-    description: 'S3 plugin for Data Fair Catalog',
+    title: 'Catalog Azure Synapse',
+    description: 'Azure Synapse plugin for Data Fair Catalog',
     capabilities
   },
   configSchema,

@@ -1,167 +1,339 @@
 {
-  "$id": "https://github.com/data-fair/catalog-mock/catalog-config",
-  "x-exports": [
-    "types",
-    "validate",
-    "schema"
-  ],
-  "title": "MockConfig",
+  "$id": "https://github.com/data-fair/catalog-s3/catalog-config",
+  "x-exports": ["types", "validate", "schema"],
+  "title": "AzureSynapseConfig",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "url",
-    "delay"
-  ],
+  "required": ["endpoint", "region", "bucket", "accessKeys"],
   "properties": {
-    "url": {
+    "endpoint": {
       "type": "string",
-      "title": "URL",
-      "description": "The url of the catalog",
+      "title": "Endpoint",
+      "description": "The address of the S3 server that contains the buckets",
       "x-i18n-description": {
-        "fr": "L'URL de l'API du catalogue"
-      },
-      "pattern": "^https?://.*[^/]$",
-      "errorMessage": "The URL must start with http:// or https:// and must not end with `/`.",
-      "x-i18n-errorMessage": {
-        "fr": "L'URL doit commencer par http:// ou https:// et ne pas se terminer par `/`."
-      },
-      "examples": ["https://example.com"]
+        "fr": "L'adresse du serveur contenant les buckets"
+      }
     },
-    "secretField": {
+    "region": {
       "type": "string",
-      "title": "Secret Field",
+      "title": "Region",
       "x-i18n-title": {
-        "fr": "Champ chiffré"
+        "fr": "Région"
       },
-      "description": "A secret field that is ciphered but for testing purposes, shown in the description of imported datasets.",
+      "description": "Depending on the region, the processing of S3 requests may differ.",
       "x-i18n-description": {
-        "fr": "Un champ secret qui est chiffré mais qui, à des fins de test, est affiché dans la description des jeux de données importés."
+        "fr": "Selon la région, le traitement des requêtes S3 peut être différent."
       },
-      "layout": {
-        "props": {
-          "type": "password",
-          "autocomplete": "suppress"
+      "oneOfLayout": {
+        "label": "Select your S3 server region",
+        "x-i18n-label": {
+          "fr": "Sélectionnez la région de votre serveur S3"
         }
-      }
-    },
-    "thumbnailUrl": {
-      "type": "string",
-      "title": "Thumbnail URL",
-      "x-i18n-title": {
-        "fr": "URL de la vignette"
-      },
-      "description": "The URL of the thumbnail image for the catalog. If not provided, no thumbnail will be displayed.",
-      "x-i18n-description": {
-        "fr": "L'URL de l'image miniature du catalogue. Si non fourni, aucune vignette ne sera affichée."
-      },
-      "pattern": "^https?://.*[^/]$",
-      "errorMessage": "The Thumbnail URL must start with http:// or https:// and must not end with `/`.",
-      "x-i18n-errorMessage": {
-        "fr": "L'URL de la vignette doit commencer par http:// ou https:// et ne pas se terminer par `/`."
-      },
-      "examples": ["https://cdn.jsdelivr.net/gh/data-fair/data-fair@master/ui/public/assets/logo.svg"],
-      "layout": {
-        "props": {
-          "clearable": true
-        }
-      }
-    },
-    "delay": {
-      "type": "number",
-      "title": "Response Delay",
-      "x-i18n-title": {
-        "fr": "Délai de réponse"
-      },
-      "description": "Adds a response delay (in ms) to requests to simulate server response time. Set to 0 to disable.",
-      "x-i18n-description": {
-        "fr": "Ajoute un temps de réponse (en ms) aux requêtes pour simuler un délai de réponse du serveur. La valeur 0 désactive le délai."
-      },
-      "default": 500,
-      "minimum": 0,
-      "maximum": 60000,
-      "layout": {
-        "cols": 4,
-        "props": {
-          "step": 100
-        }
-      }
-    },
-    "searchCapability": {
-      "type": "boolean",
-      "title": "Search Capability",
-      "x-i18n-title": {
-        "fr": "Capacité de recherche"
-      },
-      "description": "Indicates whether the catalog dynamically supports the search feature.",
-      "x-i18n-description": {
-        "fr": "Indique si le catalogue prend en charge dynamiquement la fonctionnalité de recherche."
-      },
-      "default": true,
-      "layout": {
-        "comp": "switch",
-        "cols": 4
-      }
-    },
-    "paginationCapability": {
-      "type": "boolean",
-      "title": "Pagination Capability",
-      "x-i18n-title": {
-        "fr": "Capacité de pagination"
-      },
-      "description": "Indicates whether the catalog dynamically supports pagination.",
-      "x-i18n-description": {
-        "fr": "Indique si le catalogue prend en charge dynamiquement la pagination."
-      },
-      "default": true,
-      "layout": {
-        "comp": "switch",
-        "cols": 4
-      }
-    },
-    "publicationMode": {
-      "type": "string",
-      "title": "Publication Mode",
-      "x-i18n-title": {
-        "fr": "Mode de publication"
-      },
-      "description": "Select the publication mode to test different scenarios: 'none' for no publication capabilities, 'simple' for basic publication (one capability), 'full' for all publication capabilities, or 'withSite' for all capabilities including requiresPublicationSite.",
-      "x-i18n-description": {
-        "fr": "Sélectionnez le mode de publication pour tester différents scénarios : 'none' pour aucune capacité de publication, 'simple' pour une publication basique (une seule capacité), 'full' pour toutes les capacités de publication, ou 'withSite' pour toutes les capacités y compris requiresPublicationSite."
-      },
-      "default": "full",
-      "layout": {
-        "cols": 6
       },
       "oneOf": [
         {
-          "const": "none",
-          "title": "No publication",
+          "const": "us-east-1",
+          "title": "US East (North Virginia)",
           "x-i18n-title": {
-            "fr": "Aucune publication"
+            "fr": "États-Unis Est (Virginie du Nord)"
           }
         },
         {
-          "const": "simple",
-          "title": "Simple (createFolderInRoot only)",
+          "const": "us-east-2",
+          "title": "US East (Ohio)",
           "x-i18n-title": {
-            "fr": "Simple (createFolderInRoot uniquement)"
+            "fr": "États-Unis Est (Ohio)"
           }
         },
         {
-          "const": "full",
-          "title": "Full (all publication capabilities)",
+          "const": "us-west-1",
+          "title": "US West (North California)",
           "x-i18n-title": {
-            "fr": "Complet (toutes les capacités de publication)"
+            "fr": "États-Unis Ouest (Californie du Nord)"
           }
         },
         {
-          "const": "withSite",
-          "title": "With publication site (requiresPublicationSite)",
+          "const": "us-west-2",
+          "title": "US West (Oregon)",
           "x-i18n-title": {
-            "fr": "Avec site de publication (requiresPublicationSite)"
+            "fr": "États-Unis Ouest (Oregon)"
+          }
+        },
+        {
+          "const": "af-south-1",
+          "title": "Africa (Cape Town)",
+          "x-i18n-title": {
+            "fr": "Afrique (Le Cap)"
+          }
+        },
+        {
+          "const": "ap-east-1",
+          "title": "Asia Pacific (Hong Kong)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Hong Kong)"
+          }
+        },
+        {
+          "const": "ap-south-2",
+          "title": "Asia Pacific (Hyderabad)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Hyderabad)"
+          }
+        },
+        {
+          "const": "ap-southeast-3",
+          "title": "Asia Pacific (Jakarta)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Jakarta)"
+          }
+        },
+        {
+          "const": "ap-southeast-5",
+          "title": "Asia Pacific (Malaysia)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Malaisie)"
+          }
+        },
+        {
+          "const": "ap-southeast-4",
+          "title": "Asia Pacific (Melbourne)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Melbourne)"
+          }
+        },
+        {
+          "const": "ap-south-1",
+          "title": "Asia Pacific (Mumbai)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Mumbai)"
+          }
+        },
+        {
+          "const": "ap-southeast-6",
+          "title": "Asia Pacific (New Zealand)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Nouvelle-Zélande)"
+          }
+        },
+        {
+          "const": "ap-northeast-3",
+          "title": "Asia Pacific (Osaka)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Osaka)"
+          }
+        },
+        {
+          "const": "ap-northeast-2",
+          "title": "Asia Pacific (Seoul)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Séoul)"
+          }
+        },
+        {
+          "const": "ap-southeast-1",
+          "title": "Asia Pacific (Singapore)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Singapour)"
+          }
+        },
+        {
+          "const": "ap-southeast-2",
+          "title": "Asia Pacific (Sydney)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Sydney)"
+          }
+        },
+        {
+          "const": "ap-east-2",
+          "title": "Asia Pacific (Taipei)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Taipei)"
+          }
+        },
+        {
+          "const": "ap-southeast-7",
+          "title": "Asia Pacific (Thailand)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Thaïlande)"
+          }
+        },
+        {
+          "const": "ap-northeast-1",
+          "title": "Asia Pacific (Tokyo)",
+          "x-i18n-title": {
+            "fr": "Asie-Pacifique (Tokyo)"
+          }
+        },
+        {
+          "const": "ca-central-1",
+          "title": "Canada (Central)",
+          "x-i18n-title": {
+            "fr": "Canada (Centre)"
+          }
+        },
+        {
+          "const": "ca-west-1",
+          "title": "Canada West (Calgary)",
+          "x-i18n-title": {
+            "fr": "Canada Ouest (Calgary)"
+          }
+        },
+        {
+          "const": "eu-central-1",
+          "title": "Europe (Frankfurt)",
+          "x-i18n-title": {
+            "fr": "Europe (Francfort)"
+          }
+        },
+        {
+          "const": "eu-west-1",
+          "title": "Europe (Ireland)",
+          "x-i18n-title": {
+            "fr": "Europe (Irlande)"
+          }
+        },
+        {
+          "const": "eu-west-2",
+          "title": "Europe (London)",
+          "x-i18n-title": {
+            "fr": "Europe (Londres)"
+          }
+        },
+        {
+          "const": "eu-south-1",
+          "title": "Europe (Milan)",
+          "x-i18n-title": {
+            "fr": "Europe (Milan)"
+          }
+        },
+        {
+          "const": "eu-west-3",
+          "title": "Europe (Paris)",
+          "x-i18n-title": {
+            "fr": "Europe (Paris)"
+          }
+        },
+        {
+          "const": "eu-south-2",
+          "title": "Europe (Spain)",
+          "x-i18n-title": {
+            "fr": "Europe (Espagne)"
+          }
+        },
+        {
+          "const": "eu-north-1",
+          "title": "Europe (Stockholm)",
+          "x-i18n-title": {
+            "fr": "Europe (Stockholm)"
+          }
+        },
+        {
+          "const": "eu-central-2",
+          "title": "Europe (Zurich)",
+          "x-i18n-title": {
+            "fr": "Europe (Zurich)"
+          }
+        },
+        {
+          "const": "il-central-1",
+          "title": "Israel (Tel Aviv)",
+          "x-i18n-title": {
+            "fr": "Israël (Tel Aviv)"
+          }
+        },
+        {
+          "const": "mx-central-1",
+          "title": "Mexico (Central)",
+          "x-i18n-title": {
+            "fr": "Mexique (Centre)"
+          }
+        },
+        {
+          "const": "me-south-1",
+          "title": "Middle East (Bahrain)",
+          "x-i18n-title": {
+            "fr": "Moyen-Orient (Bahreïn)"
+          }
+        },
+        {
+          "const": "me-central-1",
+          "title": "Middle East (UAE)",
+          "x-i18n-title": {
+            "fr": "Moyen-Orient (Émirats arabes unis)"
+          }
+        },
+        {
+          "const": "sa-east-1",
+          "title": "South America (São Paulo)",
+          "x-i18n-title": {
+            "fr": "Amérique du Sud (São Paulo)"
+          }
+        },
+        {
+          "const": "us-gov-east-1",
+          "title": "AWS GovCloud (US-East)",
+          "x-i18n-title": {
+            "fr": "AWS GovCloud (États-Unis Est)"
+          }
+        },
+        {
+          "const": "us-gov-west-1",
+          "title": "AWS GovCloud (US-West)",
+          "x-i18n-title": {
+            "fr": "AWS GovCloud (États-Unis Ouest)"
           }
         }
       ]
+    },
+    "bucket": {
+      "type": "string",
+      "title": "Bucket name",
+      "x-i18n-title": {
+        "fr": "Nom du bucket"
+      }
+    },
+    "forcePathStyle" : {
+      "type": "boolean",
+      "title": "Path style forcing",
+      "x-i18n-title": {
+        "fr": "Forçage du type chemin"
+      },
+      "default": false,
+      "description" : "When the bucket name is part of the path, you must force the style (e.g., Minio).",
+      "x-i18n-description": {
+        "fr": "Lorsque le nom du bucket fait partie du chemin, vous devez forcer le type (ex: Minio)."
+      }
+    },
+    "accessKeys": {
+      "type": "object",
+      "title": "Connection keys",
+      "x-i18n-title": {
+        "fr": "Clés de connexion"
+      },
+      "description": "The login keys to provide to access the S3 server",
+      "x-i18n-description": {
+        "fr": "Les clés de connexion à fournir pour accéder au serveur S3"
+      },
+      "required": [
+        "accessKeyId",
+        "secretAccessKey"
+      ],
+      "properties": {
+        "accessKeyId" : {
+          "title": "Server access key",
+          "x-i18n-title": {
+            "fr": "Clé d'accès au serveur"
+          },
+          "type": "string"
+        },
+        "secretAccessKey": {
+          "title": "Secret key for the connection",
+          "x-i18n-title": {
+            "fr": "Clé secrète pour la connexion"
+          },
+          "type": "string"
+        }
+      }
     }
   }
 }

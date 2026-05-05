@@ -1,84 +1,95 @@
-import type { CatalogPlugin, GetResourceContext } from '@data-fair/types-catalogs'
-import type { MockConfig } from '#types'
+import type { AzureSynapseConfig } from '#types'
+import type capabilities from './capabilities.ts'
+import type { ListContext, Folder, CatalogPlugin } from '@data-fair/types-catalogs'
+// import { ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { getS3Client } from './client.ts'
 
-export const getResource = async ({ catalogConfig, secrets, resourceId, importConfig, tmpDir, log }: GetResourceContext<MockConfig>): ReturnType<CatalogPlugin['getResource']> => {
-  await log.info(`Downloading resource ${resourceId}`, { catalogConfig, secrets, importConfig })
+type ResourceList = Awaited<ReturnType<CatalogPlugin['list']>>['results']
 
-  // Simulate a delay for the mock plugin
-  await log.task('delay', 'Simulate delay for mock plugin (Response Delay * 10) ', catalogConfig.delay * 10)
-  for (let i = 0; i < catalogConfig.delay * 10; i += catalogConfig.delay) {
-    await new Promise(resolve => setTimeout(resolve, catalogConfig.delay))
-    await log.progress('delay', i + catalogConfig.delay)
-  }
+/**
+ * Lists the contents of a folder on an S3 server.
+ *
+ * @param context   The context containing catalog configuration and parameters
+ * @returns   An object containing the count of items, the list of results (folders and resources), and the path as an array of folders
+ */
+export const list = async ({ catalogConfig, secrets, params }: ListContext<AzureSynapseConfig, typeof capabilities>): ReturnType<CatalogPlugin['list']> => {
+  // We don't call sendS3Command() directly because of a potential loop if we get a lot of results;
+  // this avoids a perpetual destruction and reconstruction of the S3 client.
+  const client = getS3Client(catalogConfig, secrets)
 
-  // Validate the importConfig
-  await log.step('Validate import configuraiton')
-  const { returnValid } = await import('#type/importConfig/index.ts')
-  returnValid(importConfig)
-  await log.info('Import configuration is valid', { importConfig })
+  const results: (Folder | ResourceList[number])[] = []
+  // let continuationToken: string | undefined
 
-  // First check if the resource exists
-  const resources = (await import('./resources/resources-mock.ts')).default
-  const resource = resources.resources[resourceId]
-  if (!resource) { throw new Error(`Resource with ID ${resourceId} not found`) }
+  // We retrieve the data as long as there is still some available (limit of 1000 by default per query)
+  /**
+  do {
+    const data = await client.send(new ListObjectsV2Command({
+      Bucket: catalogConfig.bucket,
+      Prefix: params.currentFolderId ? params.currentFolderId.substring(1) + '/' : '',
+      Delimiter: '/',
+      ContinuationToken: continuationToken  // undefined for the first request
+      // MaxKeys: 1000 by default
+    }))
 
-  // Import necessary modules dynamically
-  const fs = await import('node:fs/promises')
-  const path = await import('node:path')
+    // The output is designed to always send directories (prefixes) before files (contents), in the same way as a classic file explorer.
 
-  await log.step('Download resource file')
-  await log.warning('This task can take a while, please be patient')
-  // Simulate downloading by copying a dummy file with limited rows
-  const sourceFile = path.join(import.meta.dirname, 'resources', 'dataset-mock.csv')
-  const destFile = path.join(tmpDir, 'dataset-mock.csv')
-  const data = await fs.readFile(sourceFile, 'utf8')
+    // Get the directories
+    if (data.CommonPrefixes) {
+      for (const prefix of data.CommonPrefixes) {
+        const name = prefix.Prefix ? prefix.Prefix.substring(0, prefix.Prefix.length - 1).split('/').pop()! : 'unnamed'
+        const folder: Folder = {
+          // This corresponds to prefix.Prefix; however, if the prefix (directory) is not named, the path from which it was extracted must be retained.
+          id: (params.currentFolderId ?? '') + '/' + name,
+          title: name,
+          type: 'folder',
+          updatedAt: undefined
+        }
+        results.push(folder)
+      }
+    }
 
-  // Limit the number of rows to importConfig.nbRows (Header excluded)
-  const lines = data.split('\n').slice(0, importConfig.nbRows + 1).join('\n')
-  await fs.writeFile(destFile, lines, 'utf8')
-  await log.info(`${importConfig.nbRows} rows downloaded`)
+    // Get the files
+    if (data.Contents) {
+      for (const file of data.Contents) {
+        const name = file.Key ? file.Key.split('/').pop()! : 'unnamed'
+        const pointPos = name.lastIndexOf('.')
+        const resourceList: ResourceList[number] = {
+          // This corresponds to file.key; however, if the file is not named, the path from which it was extracted must be retained.
+          id: (params.currentFolderId ?? '') + '/' + name,
+          title: name,
+          type: 'resource',
+          description: '',
+          format: (pointPos === -1) ? '' : (name.substring(pointPos + 1)),
+          mimeType: '',
+          size: file.Size ?? 0,
+          updatedAt: file.LastModified ? file.LastModified.toISOString() : undefined
+        }
+        results.push(resourceList)
+      }
+    }
 
-  await log.step('End of resource download')
-  await log.info(`Resource ${resourceId} downloaded successfully`)
-  await log.info(`Resource slug is ${resource.slug}`)
-  await log.warning('This is a mock resource, the file is not real and does not contain real data.')
-  await log.error('Example of an error log for demonstration purposes.')
+    // We retrieve the next token. If there isn't one, it becomes undefined and the loop stops.
+    continuationToken = data.NextContinuationToken
+  } while (continuationToken)
+   */
 
-  const attachments = []
-  if (importConfig.importAttachments) {
-    // Copy thumbnail to the tmpDir if it exists
-    const thumbnailSource = path.join(import.meta.dirname, 'resources', 'thumbnail.svg')
-    const thumbnailDest = path.join(tmpDir, 'thumbnail.svg')
-    await fs.copyFile(thumbnailSource, thumbnailDest)
-    await log.info(`Thumbnail downloaded to ${thumbnailDest}`)
-    attachments.push(
-      {
-        title: 'Mock Attachment',
-        description: 'This is a mock attachment',
-        url: 'https://example.com/mock-attachment'
-      })
-    attachments.push({
-      title: 'Another Mock Attachment',
-      description: 'This is another mock attachment',
-      filePath: thumbnailDest
+  // Get the path location
+  const pathFolder: Folder[] = []
+  let parentId: string | undefined = params.currentFolderId
+  while (parentId && parentId !== '') {
+    pathFolder.unshift({
+      id: parentId,
+      title: parentId.substring(parentId.lastIndexOf('/') + 1),
+      type: 'folder'
     })
-  } else {
-    await log.warning('Attachments import is disabled, no attachments will be imported.')
+    parentId = parentId.substring(0, parentId.lastIndexOf('/'))
   }
+
+  client.destroy()
 
   return {
-    id: resourceId,
-    ...resource,
-    description: resource.description + '\n\n' + secrets.secretField, // Include the secret in the description for demonstration
-    filePath: destFile,
-    frequency: 'monthly',
-    image: 'https://koumoul.com/data-fair-portals/api/v1/portals/8cbc8974-2fd2-46aa-b328-804600dc840f/assets/logo',
-    license: {
-      href: 'https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf',
-      title: 'Licence Ouverte / Open Licence'
-    },
-    keywords: ['mock', 'example', 'data'],
-    origin: 'https://example.com/mock',
-    attachments
+    count: results.length,
+    results,
+    path: pathFolder
   }
 }

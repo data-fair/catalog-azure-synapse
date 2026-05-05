@@ -6,21 +6,8 @@ import type { Capability } from '@data-fair/types-catalogs'
  * The capabilities must satisfy the `Capability` type.
  */
 export const capabilities = [
-  'thumbnail',
-  'thumbnailUrl',
-  'search',
-  'pagination',
-
-  'import',
-  'importConfig',
-
-  'createFolderInRoot',
-  'createFolder',
-  'createResource',
-  'replaceFolder',
-  'replaceResource',
-  'requiresPublicationSite'
+  'import'
 ] satisfies Capability[]
 
-export type MockCapabilities = typeof capabilities
+export type AzureSynapseCapabilities = typeof capabilities
 export default capabilities

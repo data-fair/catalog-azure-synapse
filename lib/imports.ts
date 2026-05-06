@@ -2,7 +2,7 @@ import type { AzureSynapseConfig } from '#types'
 import type capabilities from './capabilities.ts'
 import type { ListContext, Folder, CatalogPlugin } from '@data-fair/types-catalogs'
 // import { ListObjectsV2Command } from '@aws-sdk/client-s3'
-import { getS3Client } from './client.ts'
+// import { getS3Client } from './client.ts'
 
 type ResourceList = Awaited<ReturnType<CatalogPlugin['list']>>['results']
 
@@ -15,7 +15,7 @@ type ResourceList = Awaited<ReturnType<CatalogPlugin['list']>>['results']
 export const list = async ({ catalogConfig, secrets, params }: ListContext<AzureSynapseConfig, typeof capabilities>): ReturnType<CatalogPlugin['list']> => {
   // We don't call sendS3Command() directly because of a potential loop if we get a lot of results;
   // this avoids a perpetual destruction and reconstruction of the S3 client.
-  const client = getS3Client(catalogConfig, secrets)
+  // const client = getS3Client(catalogConfig, secrets)
 
   const results: (Folder | ResourceList[number])[] = []
   // let continuationToken: string | undefined
@@ -85,7 +85,7 @@ export const list = async ({ catalogConfig, secrets, params }: ListContext<Azure
     parentId = parentId.substring(0, parentId.lastIndexOf('/'))
   }
 
-  client.destroy()
+  // client.destroy()
 
   return {
     count: results.length,

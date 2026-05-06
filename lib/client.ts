@@ -1,54 +1,33 @@
 import type { AzureSynapseConfig } from '#types'
+import { DataLakeServiceClient, StorageSharedKeyCredential } from '@azure/storage-file-datalake'
+import { ClientSecretCredential } from '@azure/identity'
 import type { LogFunctions } from '@data-fair/types-catalogs'
 
 /**
- * Allows you to obtain the S3 Client instance to connect
+ * Allows you to obtain the Azure Synapse Client instance to connect
  *
  * @param catalogConfig   The S3 configuration object
  * @param secrets         Secret elements for configuration (such as the login key)
  * @returns   The S3 Client instance
  */
-export const getS3Client = (
-  catalogConfig: AzureSynapseConfig,
-  secrets: Record<string, string>
-): any => { // S3Client => {
-  return ({ // new S3Client({
-    region: catalogConfig.region,
-    credentials: {
-      accessKeyId: catalogConfig.accessKeys.accessKeyId,
-      secretAccessKey: secrets.secretAccessKey
-    },
-    endpoint: catalogConfig.endpoint,
-    forcePathStyle: catalogConfig.forcePathStyle
-  })
-}
-
-/**
- * Allows you to execute a command on an S3 client and return the result
- *
- * @param catalogConfig   The S3 configuration object
- * @param secrets         Secret elements for configuration (such as the login key)
- * @param command         The command to execute
- * @param Output          Command output type
- * @returns   Command result
- */
-export const sendS3Command = async <Output>(
+export const getAzureSynapseClient = (
   catalogConfig: AzureSynapseConfig,
   secrets: Record<string, string>,
-  command: any,
-  log?: LogFunctions,
-  treatment?: (data: Output) => Promise<void>
-): Promise<Output> => {
-  const client = getS3Client(catalogConfig, secrets)
-  try {
-    const data = await client.send(command) as Output
-    if (treatment) await treatment(data)
-    return data
-  } catch (error: any) {
-    console.error('S3 request failed: ' + error)
-    if (log) await log.error('S3 request failed: ' + error.message)
-    throw new Error('S3 request failed: ' + error.message)
-  } finally {
-    client.destroy()
+  log?: LogFunctions
+): DataLakeServiceClient => {
+  if (catalogConfig.connectionMethod.key === 'storageSharedKey') {
+    return new DataLakeServiceClient(
+      `https://${catalogConfig.account}.dfs.core.windows.net`,
+      new StorageSharedKeyCredential(catalogConfig.account, secrets.accountKey)
+    )
+  } else if (catalogConfig.connectionMethod.key === 'clientSecret') {
+    return new DataLakeServiceClient(
+      `https://${catalogConfig.account}.dfs.core.windows.net`,
+      new ClientSecretCredential(catalogConfig.connectionMethod.tenantId, catalogConfig.connectionMethod.clientId, secrets.clientSecret)
+    )
+  } else {
+    console.error('Connection impossible, no connection mode exists')
+    log?.error('Connection impossible, no connection mode exists')
+    throw new Error('Connection impossible, no connection mode exists')
   }
 }

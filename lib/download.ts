@@ -1,6 +1,6 @@
 import type { AzureSynapseConfig } from '#types'
 import type { CatalogPlugin, GetResourceContext, Resource } from '@data-fair/types-catalogs'
-import { getAzureSynapseClient } from './client.ts'
+import { getAzureSynapseFileSystemClient } from './client.ts'
 import { pipeline } from 'stream/promises'
 import fs from 'fs-extra'
 
@@ -43,8 +43,7 @@ const downloadResource = async ({ catalogConfig, resourceId, secrets, tmpDir, lo
   const filename = resourceId.substring(resourceId.lastIndexOf('/') + 1)
   const destinationPath = tmpDir + '/' + filename
 
-  const client = getAzureSynapseClient(catalogConfig, secrets, log)
-  const fileSystemClient = client.getFileSystemClient(catalogConfig.fileSystemName)
+  const fileSystemClient = await getAzureSynapseFileSystemClient(catalogConfig, secrets)
 
   const file = fileSystemClient.getFileClient(resourceId)
   const downloadResponse = await file.read()
@@ -53,6 +52,9 @@ const downloadResource = async ({ catalogConfig, resourceId, secrets, tmpDir, lo
       downloadResponse.readableStreamBody,
       fs.createWriteStream(destinationPath)
     )
+  } else {
+    await log.error('The file cannot be downloaded')
+    throw new Error('The file cannot be downloaded')
   }
 
   return destinationPath

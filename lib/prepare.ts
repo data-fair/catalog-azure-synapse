@@ -1,7 +1,7 @@
 import type { AzureSynapseConfig } from '#types'
 import type { PrepareContext } from '@data-fair/types-catalogs'
 import type { AzureSynapseCapabilities } from './capabilities.ts'
-import { getAzureSynapseClient } from './client.ts'
+import { getAzureSynapseFileSystemClient } from './client.ts'
 
 /**
  * This allows you to verify that you can create the catalog by testing a connection to an S3 server.
@@ -35,8 +35,8 @@ export default async ({ catalogConfig, secrets }: PrepareContext<AzureSynapseCon
   // try the Azure Synapse connection
   try {
     // We use a minimal command to test if everything is correct
-    const datalakeServiceClient = getAzureSynapseClient(catalogConfig, secrets)
-    await datalakeServiceClient.getProperties()
+    const fileSystemClient = await getAzureSynapseFileSystemClient(catalogConfig, secrets)
+    await fileSystemClient.getProperties()
   } catch (error) {
     console.error('Connection test failed:', error)
     const err = error as Error

@@ -12,8 +12,6 @@ type ResourceList = Awaited<ReturnType<CatalogPlugin['list']>>['results']
  * @returns   An object containing the count of items, the list of results (folders and resources), and the path as an array of folders
  */
 export const list = async ({ catalogConfig, secrets, params }: ListContext<AzureSynapseConfig, typeof capabilities>): ReturnType<CatalogPlugin['list']> => {
-  // We don't call sendS3Command() directly because of a potential loop if we get a lot of results;
-  // this avoids a perpetual destruction and reconstruction of the S3 client.
   const client = getAzureSynapseClient(catalogConfig, secrets)
   const fileSystemClient = client.getFileSystemClient(catalogConfig.fileSystemName)
 
@@ -60,8 +58,6 @@ export const list = async ({ catalogConfig, secrets, params }: ListContext<Azure
     })
     parentId = parentId.substring(0, parentId.lastIndexOf('/'))
   }
-
-  // client.destroy()
 
   return {
     count: results.length,

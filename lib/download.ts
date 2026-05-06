@@ -1,15 +1,13 @@
 import type { AzureSynapseConfig } from '#types'
 import type { CatalogPlugin, GetResourceContext, Resource } from '@data-fair/types-catalogs'
-// import s3 from '@aws-sdk/client-s3'
-// import { pipeline } from 'stream/promises'
-// import fs from 'fs-extra'
-// import { sendS3Command } from './client.ts'
+import { getAzureSynapseClient } from './client.ts'
+import { pipeline } from 'stream/promises'
+import fs from 'fs-extra'
 
 /**
- * Downloads a specific resource locally from an S3 server and retrieves metadata from the downloaded file path.
+ * Downloads a specific resource locally from an Azure Synapse server and retrieves metadata from the downloaded file path.
  *
  * @param catalogConfig   The S3 configuration object
- * @param resourceId      The identifier (path) of the resource
  * @returns   A `Resource` object representing the file
  */
 export const getResource = async (context: GetResourceContext<AzureSynapseConfig>): ReturnType<CatalogPlugin['getResource']> => {
@@ -36,39 +34,26 @@ export const getMetaData = async ({ resourceId }: GetResourceContext<AzureSynaps
 }
 
 /**
- * Downloads a resource (file) from the S3 server to a temporary directory.
+ * Downloads a resource (file) from the Azure Synapse server to a temporary directory.
  *
- * @param context   The context containing catalog configuration, resource ID, import configuration, and temporary directory path
+ * @param context   The context containing catalog configuration, resource ID, import configuration, temporary directory path and log instance
  * @returns   The local path to the downloaded file, or `undefined` if the download fails
  */
 const downloadResource = async ({ catalogConfig, resourceId, secrets, tmpDir, log }:GetResourceContext<AzureSynapseConfig>) => {
-  try {
-    const filename = resourceId.substring(resourceId.lastIndexOf('/') + 1)
-    const destinationPath = tmpDir + '/' + filename
+  const filename = resourceId.substring(resourceId.lastIndexOf('/') + 1)
+  const destinationPath = tmpDir + '/' + filename
 
-    /**
-    const pipelineFunction = async (data: s3.GetObjectCommandOutput) => {
-      // We are not explicitly retrieving a file but a stream, which must be read in order to import the resource.
-      await pipeline(
-        data.Body as NodeJS.ReadableStream,
-        fs.createWriteStream(destinationPath)
-      )
-    }
+  const client = getAzureSynapseClient(catalogConfig, secrets, log)
+  const fileSystemClient = client.getFileSystemClient(catalogConfig.fileSystemName)
 
-    await sendS3Command<s3.GetObjectCommandOutput>(
-      catalogConfig, secrets,
-      new s3.GetObjectCommand({
-        Bucket: catalogConfig.bucket,
-        Key: resourceId.substring(1) // Take away the first slash, the keys doesn't have them
-      }),
-      log, pipelineFunction
+  const file = fileSystemClient.getFileClient(resourceId)
+  const downloadResponse = await file.read()
+  if (downloadResponse.readableStreamBody) {
+    await pipeline(
+      downloadResponse.readableStreamBody,
+      fs.createWriteStream(destinationPath)
     )
-    */
-
-    return destinationPath
-  } catch (error: any) {
-    console.log('S3 request failed: ' + error)
-    if (log) await log.error('S3 request failed: ' + error.message)
-    throw new Error('S3 request failed: ' + error.message)
   }
+
+  return destinationPath
 }

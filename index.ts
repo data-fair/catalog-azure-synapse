@@ -1,6 +1,6 @@
-import type { CatalogPlugin } from '@data-fair/types-catalogs'
+import type CatalogPlugin from '@data-fair/types-catalogs'
 import { type AzureSynapseConfig, configSchema, assertConfigValid } from '#types'
-import capabilities, { type AzureSynapseCapabilities } from './lib/capabilities.ts'
+import { type AzureSynapseCapabilities, capabilities } from './lib/capabilities.ts'
 
 // Since the plugin is very frequently imported, each function is imported on demand,
 // instead of loading the entire plugin.
@@ -23,8 +23,7 @@ const plugin: CatalogPlugin<AzureSynapseConfig, AzureSynapseCapabilities> = {
   },
 
   metadata: {
-    title: 'Catalog Azure Synapse',
-    description: 'Azure Synapse plugin for Data Fair Catalog',
+    title: 'Azure Synapse',
     capabilities
   },
   configSchema,

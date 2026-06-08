@@ -12,9 +12,9 @@
       "x-i18n-title": {
         "fr": "Compte"
       },
-      "description": "This corresponds to the name shown in the URL: https://<account>.dfs.core.windows.net",
+      "description": "This corresponds to the name shown in the URL: https://<code>account</code>.dfs.core.windows.net",
       "x-i18n-description": {
-        "fr": "Correspond au nom indiqué dans l'URL : https://<compte>.dfs.core.windows.net"
+        "fr": "Correspond au nom indiqué dans l'URL : https://<code>compte</code>.dfs.core.windows.net"
       }
     },
     "fileSystemName": {

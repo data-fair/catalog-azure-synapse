@@ -29,9 +29,9 @@ export const getAzureSynapseFileSystemClient = async (
       new ClientSecretCredential(catalogConfig.connectionMethod.tenantId, catalogConfig.connectionMethod.clientId, secrets.clientSecret)
     )
   } else {
-    console.error('Connection impossible, no connection mode exists')
-    await log?.error('Connection impossible, no connection mode exists')
-    throw new Error('Connection impossible, no connection mode exists')
+    console.error('Connection failed: no connection mode exists')
+    await log?.error('Connection failed: no connection mode exists')
+    throw new Error('Connection failed: no connection mode exists')
   }
 
   return client.getFileSystemClient(catalogConfig.fileSystemName)

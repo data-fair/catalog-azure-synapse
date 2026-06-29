@@ -62,6 +62,9 @@
         },
         {
           "title": "Client secret",
+          "x-i18n-title": {
+            "fr": "Clé secrète du client"
+          },
           "required": ["tenantId", "clientId", "clientSecret"],
           "properties": {
             "key": {

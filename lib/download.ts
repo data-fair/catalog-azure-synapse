@@ -2,12 +2,12 @@ import type { AzureSynapseConfig } from '#types'
 import type { CatalogPlugin, GetResourceContext, Resource } from '@data-fair/types-catalogs'
 import { getAzureSynapseFileSystemClient } from './client.ts'
 import { pipeline } from 'stream/promises'
-import fs from 'fs-extra'
+import { createWriteStream } from 'node:fs'
 
 /**
  * Downloads a specific resource locally from an Azure Synapse server and retrieves metadata from the downloaded file path.
  *
- * @param catalogConfig   The S3 configuration object
+ * @param context   The context containing catalog configuration, resource ID, secrets, temporary directory path and log instance
  * @returns   A `Resource` object representing the file
  */
 export const getResource = async (context: GetResourceContext<AzureSynapseConfig>): ReturnType<CatalogPlugin['getResource']> => {
@@ -37,20 +37,21 @@ export const getMetaData = async ({ resourceId }: GetResourceContext<AzureSynaps
  * Downloads a resource (file) from the Azure Synapse server to a temporary directory.
  *
  * @param context   The context containing catalog configuration, resource ID, import configuration, temporary directory path and log instance
- * @returns   The local path to the downloaded file, or `undefined` if the download fails
+ * @returns   The local path to the downloaded file
  */
-const downloadResource = async ({ catalogConfig, resourceId, secrets, tmpDir, log }:GetResourceContext<AzureSynapseConfig>) => {
+const downloadResource = async ({ catalogConfig, resourceId, secrets, tmpDir, log }: GetResourceContext<AzureSynapseConfig>) => {
   const filename = resourceId.substring(resourceId.lastIndexOf('/') + 1)
   const destinationPath = tmpDir + '/' + filename
 
   const fileSystemClient = await getAzureSynapseFileSystemClient(catalogConfig, secrets)
 
-  const file = fileSystemClient.getFileClient(resourceId)
+  // resourceId starts with '/', which would produce a double slash in the file URL
+  const file = fileSystemClient.getFileClient(resourceId.replace(/^\//, ''))
   const downloadResponse = await file.read()
   if (downloadResponse.readableStreamBody) {
     await pipeline(
       downloadResponse.readableStreamBody,
-      fs.createWriteStream(destinationPath)
+      createWriteStream(destinationPath)
     )
   } else {
     await log.error('The file cannot be downloaded')

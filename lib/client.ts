@@ -15,6 +15,12 @@ export const getAzureSynapseFileSystemClient = async (
   secrets: Record<string, string>,
   log?: LogFunctions
 ): Promise<DataLakeFileSystemClient> => {
+  // the account is interpolated in the host name: without this check a value like
+  // "evil.example/x?" or "127.0.0.1:8080/#" sends the signed requests anywhere (SSRF)
+  // Azure storage account names are 3 to 24 lowercase letters and digits
+  if (!/^[a-z0-9]{3,24}$/.test(catalogConfig.account)) {
+    throw new Error('Invalid account name: it must contain 3 to 24 lowercase letters and digits')
+  }
   const url = `https://${catalogConfig.account}.dfs.core.windows.net`
   let client
 

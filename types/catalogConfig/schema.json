@@ -56,6 +56,12 @@
               "title": "Account key",
               "x-i18n-title": {
                 "fr": "Clé du compte"
+              },
+              "layout": {
+                "props": {
+                  "type": "password",
+                  "autocomplete": "suppress"
+                }
               }
             }
           }
@@ -89,6 +95,12 @@
               "title": "Client secret",
               "x-i18n-title": {
                 "fr": "Clé secrète du client"
+              },
+              "layout": {
+                "props": {
+                  "type": "password",
+                  "autocomplete": "suppress"
+                }
               }
             }
           }

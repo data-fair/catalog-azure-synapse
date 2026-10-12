@@ -4,7 +4,7 @@ import type { AzureSynapseCapabilities } from './capabilities.ts'
 import { getAzureSynapseFileSystemClient } from './client.ts'
 
 /**
- * This allows you to verify that you can create the catalog by testing a connection to an S3 server.
+ * This allows you to verify that you can create the catalog by testing a connection to the Azure Data Lake storage.
  * The secret key used for the connection is also hidden.
  *
  * @param context   The context containing catalog configuration and secrets fields

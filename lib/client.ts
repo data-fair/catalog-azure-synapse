@@ -6,7 +6,7 @@ import type { LogFunctions } from '@data-fair/types-catalogs'
 /**
  * Allows you to obtain the Azure Synapse File System Client instance to connect
  *
- * @param catalogConfig   The S3 configuration object
+ * @param catalogConfig   The Azure Synapse configuration object
  * @param secrets         Secret elements for configuration (such as the login key)
  * @returns   The Azure Synapse File System Client instance
  */
